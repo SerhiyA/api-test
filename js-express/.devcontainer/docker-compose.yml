@@ -1,12 +1,17 @@
 # Merged with the repo-root docker-compose.yml by the dev container, so the `app`
 # service joins the same `benchmark-net` network as the shared postgres + redis.
+#
+# NOTE: the dev container runs compose with the repo root as the project
+# directory (the first file in dockerComposeFile is ../../docker-compose.yml), so
+# relative volume paths below resolve from the repo root. We mount the whole repo
+# at /workspace and land the workspace in the js-express/ subfolder.
 services:
   app:
     image: mcr.microsoft.com/devcontainers/javascript-node:20
     command: sleep infinity
     volumes:
-      - ..:/workspace:cached
-    working_dir: /workspace
+      - .:/workspace:cached
+    working_dir: /workspace/js-express
     environment:
       PORT: "3001"
       PGHOST: postgres
