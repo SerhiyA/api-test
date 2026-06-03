@@ -8,7 +8,7 @@ mod state;
 use std::sync::Arc;
 
 use axum::{
-    extract::Request,
+    extract::{DefaultBodyLimit, Request},
     http::{HeaderName, HeaderValue},
     middleware::{self, Next},
     response::{IntoResponse, Response},
@@ -69,6 +69,8 @@ async fn main() {
         .fallback(not_found)
         .layer(middleware::from_fn(timing))
         .layer(cors)
+        // Allow large JSON payloads (matches the other impls; Axum defaults to 2 MB).
+        .layer(DefaultBodyLimit::max(32 * 1024 * 1024))
         .with_state(state);
 
     let addr = format!("0.0.0.0:{}", config.port);
