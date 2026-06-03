@@ -15,7 +15,7 @@ See [`DESCRIPTION.md`](DESCRIPTION.md) for the full project brief and
 | js-express API   | ✅ done       |
 | portal           | ✅ done       |
 | python-fastapi   | ✅ done       |
-| go-gin           | ⬜ later      |
+| go-gin           | ✅ done       |
 | rust-axum        | ⬜ later      |
 
 ## Layout
@@ -25,6 +25,7 @@ docker-compose.yml   shared postgres + redis (network: benchmark-net)
 shared/postgres/     schema.sql + seed.sql (auto-loaded on first boot)
 js-express/          Node/Express implementation (+ .devcontainer)
 python-fastapi/      Python/FastAPI implementation (+ .devcontainer)
+go-gin/              Go/Gin implementation (+ .devcontainer)
 portal/              React/Vite benchmarking UI (+ .devcontainer)
 ```
 
