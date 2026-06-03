@@ -1,0 +1,15 @@
+{
+  "name": "rust-axum",
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
+  "service": "app-rust",
+  "workspaceFolder": "/workspace/rust-axum",
+  "forwardPorts": [3004],
+  "postCreateCommand": "cargo fetch",
+  "customizations": {
+    "vscode": {
+      "extensions": ["rust-lang.rust-analyzer"]
+    }
+  }
+}

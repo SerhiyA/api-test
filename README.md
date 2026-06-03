@@ -16,7 +16,7 @@ See [`DESCRIPTION.md`](DESCRIPTION.md) for the full project brief and
 | portal           | ✅ done       |
 | python-fastapi   | ✅ done       |
 | go-gin           | ✅ done       |
-| rust-axum        | ⬜ later      |
+| rust-axum        | ✅ done       |
 
 ## Layout
 
@@ -26,6 +26,7 @@ shared/postgres/     schema.sql + seed.sql (auto-loaded on first boot)
 js-express/          Node/Express implementation (+ .devcontainer)
 python-fastapi/      Python/FastAPI implementation (+ .devcontainer)
 go-gin/              Go/Gin implementation (+ .devcontainer)
+rust-axum/           Rust/Axum implementation (+ .devcontainer)
 portal/              React/Vite benchmarking UI (+ .devcontainer)
 ```
 
