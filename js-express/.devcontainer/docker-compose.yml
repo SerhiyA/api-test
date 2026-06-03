@@ -1,0 +1,28 @@
+# Merged with the repo-root docker-compose.yml by the dev container, so the `app`
+# service joins the same `benchmark-net` network as the shared postgres + redis.
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/javascript-node:20
+    command: sleep infinity
+    volumes:
+      - ..:/workspace:cached
+    working_dir: /workspace
+    environment:
+      PORT: "3001"
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: bench
+      PGPASSWORD: bench
+      PGDATABASE: taskbench
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-secret-change-me
+      CORS_ORIGIN: "*"
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - benchmark-net

@@ -1,0 +1,49 @@
+# Shared infrastructure for the backend language benchmark.
+# Postgres + Redis are defined ONCE here and shared across every implementation
+# via the `benchmark-net` network. Each language's .devcontainer merges this file
+# with its own compose file so they all join the same network and reuse one DB.
+name: task-benchmark
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bench
+      POSTGRES_PASSWORD: bench
+      POSTGRES_DB: taskbench
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./shared/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bench -d taskbench"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - benchmark-net
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - benchmark-net
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  benchmark-net:
+    name: benchmark-net
