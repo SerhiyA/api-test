@@ -60,7 +60,9 @@ func (h *Handlers) BenchJSON(c *gin.Context) {
 	c.JSON(200, gin.H{"received": len(items), "sumCheck": sum, "items": transformed})
 }
 
-// BenchCPU: count primes up to n via trial division.
+// BenchCPU: prime counting.
+//   algo=trial -> trial division (division-bound; the great equalizer)
+//   algo=sieve -> Sieve of Eratosthenes (memory/array-bound)
 func (h *Handlers) BenchCPU(c *gin.Context) {
 	n := atoiDefault(c.Query("n"), 100000)
 	if n < 1 {
@@ -69,6 +71,20 @@ func (h *Handlers) BenchCPU(c *gin.Context) {
 	if n > 5000000 {
 		n = 5000000
 	}
+	algo := "trial"
+	if c.Query("algo") == "sieve" {
+		algo = "sieve"
+	}
+	var count int
+	if algo == "sieve" {
+		count = countPrimesSieve(n)
+	} else {
+		count = countPrimesTrial(n)
+	}
+	c.JSON(200, gin.H{"n": n, "algo": algo, "primesFound": count})
+}
+
+func countPrimesTrial(n int) int {
 	count := 0
 	for cand := 2; cand <= n; cand++ {
 		isPrime := true
@@ -82,7 +98,21 @@ func (h *Handlers) BenchCPU(c *gin.Context) {
 			count++
 		}
 	}
-	c.JSON(200, gin.H{"n": n, "primesFound": count})
+	return count
+}
+
+func countPrimesSieve(n int) int {
+	sieve := make([]bool, n+1)
+	count := 0
+	for i := 2; i <= n; i++ {
+		if !sieve[i] {
+			count++
+			for j := i * i; j <= n; j += i {
+				sieve[j] = true
+			}
+		}
+	}
+	return count
 }
 
 // BenchDB: simple | complex | bulk.

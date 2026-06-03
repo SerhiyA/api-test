@@ -28,9 +28,19 @@ async def bench_json(request: Request):
 
 
 @router.get("/cpu")
-async def bench_cpu(n: int = 100_000):
-    """CPU-heavy work: count primes up to n via trial division."""
+async def bench_cpu(n: int = 100_000, algo: str = "trial"):
+    """CPU-heavy prime counting.
+
+    algo=trial  -> trial division (division-bound; the great equalizer)
+    algo=sieve  -> Sieve of Eratosthenes (memory/array-bound)
+    """
     n = min(5_000_000, max(1, n))
+    if algo == "sieve":
+        return {"n": n, "algo": "sieve", "primesFound": _count_primes_sieve(n)}
+    return {"n": n, "algo": "trial", "primesFound": _count_primes_trial(n)}
+
+
+def _count_primes_trial(n: int) -> int:
     count = 0
     for candidate in range(2, n + 1):
         is_prime = True
@@ -42,7 +52,22 @@ async def bench_cpu(n: int = 100_000):
             d += 1
         if is_prime:
             count += 1
-    return {"n": n, "primesFound": count}
+    return count
+
+
+def _count_primes_sieve(n: int) -> int:
+    sieve = bytearray([1]) * (n + 1)
+    count = 0
+    i = 2
+    while i <= n:
+        if sieve[i]:
+            count += 1
+            j = i * i
+            while j <= n:
+                sieve[j] = 0
+                j += i
+        i += 1
+    return count
 
 
 @router.get("/db")

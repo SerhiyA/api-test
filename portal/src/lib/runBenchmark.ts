@@ -18,6 +18,8 @@ export interface BenchResult {
   serverMs: number | null;
   error?: string;
   sample?: unknown;
+  // Number of measured samples this result is the median of (1 = single shot).
+  samples?: number;
 }
 
 export async function runBenchmark(api: ApiConfig, req: BenchRequest): Promise<BenchResult> {

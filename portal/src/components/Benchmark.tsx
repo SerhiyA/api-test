@@ -11,15 +11,50 @@ interface BenchmarkProps {
   makeRequest: () => BenchRequest;
   // Param controls rendered above the buttons.
   controls?: ReactNode;
+  // Measured samples per click (1 warmup is discarded when > 1). Default 5.
+  runs?: number;
 }
 
-export function Benchmark({ title, description, makeRequest, controls }: BenchmarkProps) {
+const median = (xs: number[]): number => {
+  const s = [...xs].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+};
+
+export function Benchmark({ title, description, makeRequest, controls, runs = 5 }: BenchmarkProps) {
   const [results, setResults] = useState<Record<string, Cell>>({});
 
   async function run(api: ApiConfig) {
     setResults((r) => ({ ...r, [api.id]: 'loading' }));
-    const res = await runBenchmark(api, makeRequest());
-    setResults((r) => ({ ...r, [api.id]: res }));
+
+    // For runs > 1: one warmup (discarded, lets V8/JITs settle), then N measured.
+    const total = runs > 1 ? runs + 1 : 1;
+    const roundTrips: number[] = [];
+    const serverTimes: number[] = [];
+    let last: BenchResult | null = null;
+
+    for (let i = 0; i < total; i++) {
+      const res = await runBenchmark(api, makeRequest());
+      last = res;
+      if (!res.ok) {
+        // Surface the first failure immediately rather than averaging errors.
+        setResults((r) => ({ ...r, [api.id]: res }));
+        return;
+      }
+      if (runs > 1 && i === 0) continue; // discard warmup
+      roundTrips.push(res.roundTripMs);
+      if (res.serverMs != null) serverTimes.push(res.serverMs);
+    }
+
+    const agg: BenchResult = {
+      ok: true,
+      status: last!.status,
+      roundTripMs: median(roundTrips),
+      serverMs: serverTimes.length ? median(serverTimes) : null,
+      sample: last!.sample,
+      samples: roundTrips.length,
+    };
+    setResults((r) => ({ ...r, [api.id]: agg }));
   }
 
   function runAll() {
@@ -56,6 +91,9 @@ export function Benchmark({ title, description, makeRequest, controls }: Benchma
         <button className="run-all" onClick={runAll} title="Run all enabled APIs">
           Run all
         </button>
+        {runs > 1 && (
+          <span className="benchmark__runs">median of {runs} runs · 1 warmup discarded</span>
+        )}
       </div>
 
       <div className="results">
@@ -123,6 +161,7 @@ function ResultBody({
       </div>
       <div className="result-card__meta">
         server {cell.serverMs != null ? `${cell.serverMs.toFixed(1)} ms` : 'n/a'}
+        {cell.samples && cell.samples > 1 ? ` · med ${cell.samples}` : ''}
       </div>
       <div className="result-card__mult">
         {isFastest ? '★ fastest' : `${multiplier.toFixed(2)}×`}

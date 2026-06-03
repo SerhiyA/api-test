@@ -33,23 +33,43 @@ benchRouter.post('/json', (req, res, next) => {
   }
 });
 
-// GET /bench/cpu?n= — CPU-heavy work: count primes up to n via trial division.
+// GET /bench/cpu?n=&algo=trial|sieve — CPU-heavy prime counting.
+//   trial = trial division (division-bound; the great equalizer)
+//   sieve = Sieve of Eratosthenes (memory/array-bound)
 benchRouter.get('/cpu', (req, res, next) => {
   try {
     const n = Math.min(5_000_000, Math.max(1, Number(req.query.n) || 100_000));
-    let count = 0;
-    for (let candidate = 2; candidate <= n; candidate++) {
-      let isPrime = true;
-      for (let d = 2; d * d <= candidate; d++) {
-        if (candidate % d === 0) { isPrime = false; break; }
-      }
-      if (isPrime) count++;
-    }
-    res.json({ n, primesFound: count });
+    const algo = req.query.algo === 'sieve' ? 'sieve' : 'trial';
+    const count = algo === 'sieve' ? countPrimesSieve(n) : countPrimesTrial(n);
+    res.json({ n, algo, primesFound: count });
   } catch (err) {
     next(err);
   }
 });
+
+function countPrimesTrial(n) {
+  let count = 0;
+  for (let candidate = 2; candidate <= n; candidate++) {
+    let isPrime = true;
+    for (let d = 2; d * d <= candidate; d++) {
+      if (candidate % d === 0) { isPrime = false; break; }
+    }
+    if (isPrime) count++;
+  }
+  return count;
+}
+
+function countPrimesSieve(n) {
+  const sieve = new Uint8Array(n + 1);
+  let count = 0;
+  for (let i = 2; i <= n; i++) {
+    if (sieve[i] === 0) {
+      count++;
+      for (let j = i * i; j <= n; j += i) sieve[j] = 1;
+    }
+  }
+  return count;
+}
 
 // GET /bench/db?type=simple|complex|bulk
 benchRouter.get('/db', async (req, res, next) => {

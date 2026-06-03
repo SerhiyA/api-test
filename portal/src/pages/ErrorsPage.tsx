@@ -53,6 +53,7 @@ export function ErrorsPage() {
           title={s.title}
           description={s.description}
           makeRequest={() => s.req}
+          runs={1}
         />
       ))}
     </div>

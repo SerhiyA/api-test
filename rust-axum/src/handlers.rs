@@ -204,11 +204,26 @@ pub async fn bench_json(_auth: AuthUser, body: Bytes) -> Result<Json<Value>, App
     Ok(Json(json!({ "received": items.len(), "sumCheck": sum, "items": transformed })))
 }
 
+// algo=trial -> trial division (division-bound; the great equalizer)
+// algo=sieve -> Sieve of Eratosthenes (memory/array-bound)
 pub async fn bench_cpu(
     _auth: AuthUser,
     Query(q): Query<HashMap<String, String>>,
 ) -> Json<Value> {
     let n = q.get("n").and_then(|s| s.parse::<i64>().ok()).unwrap_or(100_000).clamp(1, 5_000_000);
+    let algo = match q.get("algo").map(String::as_str) {
+        Some("sieve") => "sieve",
+        _ => "trial",
+    };
+    let count = if algo == "sieve" {
+        count_primes_sieve(n)
+    } else {
+        count_primes_trial(n)
+    };
+    Json(json!({ "n": n, "algo": algo, "primesFound": count }))
+}
+
+fn count_primes_trial(n: i64) -> i64 {
     let mut count = 0i64;
     for cand in 2..=n {
         let mut is_prime = true;
@@ -224,7 +239,26 @@ pub async fn bench_cpu(
             count += 1;
         }
     }
-    Json(json!({ "n": n, "primesFound": count }))
+    count
+}
+
+fn count_primes_sieve(n: i64) -> i64 {
+    let n = n as usize;
+    let mut sieve = vec![false; n + 1];
+    let mut count = 0i64;
+    let mut i = 2usize;
+    while i <= n {
+        if !sieve[i] {
+            count += 1;
+            let mut j = i * i;
+            while j <= n {
+                sieve[j] = true;
+                j += i;
+            }
+        }
+        i += 1;
+    }
+    count
 }
 
 pub async fn bench_db(
