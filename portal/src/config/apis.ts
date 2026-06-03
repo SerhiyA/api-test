@@ -11,7 +11,7 @@ export interface ApiConfig {
 
 export const APIS: ApiConfig[] = [
   { id: 'node', name: 'Node / Express', baseUrl: 'http://localhost:3001', enabled: true, color: '#5a9e2f' },
-  { id: 'python', name: 'Python / FastAPI', baseUrl: 'http://localhost:3002', enabled: false, color: '#3776ab' },
+  { id: 'python', name: 'Python / FastAPI', baseUrl: 'http://localhost:3002', enabled: true, color: '#3776ab' },
   { id: 'go', name: 'Go / Gin', baseUrl: 'http://localhost:3003', enabled: false, color: '#00add8' },
   { id: 'rust', name: 'Rust / Axum', baseUrl: 'http://localhost:3004', enabled: false, color: '#b7410e' },
 ];

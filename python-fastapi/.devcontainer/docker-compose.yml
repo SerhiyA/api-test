@@ -1,0 +1,75 @@
+# Self-contained dev container stack for python-fastapi.
+#
+# Same project name (task-benchmark) and identical postgres/redis definitions as
+# js-express, so all implementations SHARE one Postgres + Redis (start any impl,
+# the rest reuse the same containers + data volumes). The dev service is named
+# `app-python` so it doesn't collide with js-express's `app` container.
+#
+# Paths resolve from the opened folder (python-fastapi/), so:
+#   ..            -> repo root (api-test/)
+#   ../shared/... -> the real shared/ schema + seed
+name: task-benchmark
+
+services:
+  app-python:
+    image: mcr.microsoft.com/devcontainers/python:3.12
+    command: sleep infinity
+    volumes:
+      - ..:/workspace:cached
+    working_dir: /workspace/python-fastapi
+    environment:
+      PORT: "3002"
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: bench
+      PGPASSWORD: bench
+      PGDATABASE: taskbench
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-secret-change-me
+      CORS_ORIGIN: "*"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - benchmark-net
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bench
+      POSTGRES_PASSWORD: bench
+      POSTGRES_DB: taskbench
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../shared/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bench -d taskbench"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - benchmark-net
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - benchmark-net
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  benchmark-net:
+    name: benchmark-net
