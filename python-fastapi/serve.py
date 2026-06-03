@@ -1,7 +1,11 @@
+import os
+
 import uvicorn
 
 from app.config import Config
 
-# Mirrors `npm run dev` in js-express: start the server with reload.
+# Production-style by default (no reloader, which is fairer for benchmarking).
+# Set RELOAD=1 for hot-reload during development.
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=Config.port, reload=True)
+    reload = os.getenv("RELOAD", "0") == "1"
+    uvicorn.run("app.main:app", host="0.0.0.0", port=Config.port, reload=reload)
