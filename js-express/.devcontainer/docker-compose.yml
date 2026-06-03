@@ -1,9 +1,10 @@
 # Self-contained dev container stack for js-express.
 #
-# The VS Code Dev Containers extension runs compose with the OPENED FOLDER
-# (js-express/) as the project directory, so every relative path below resolves
-# from js-express/:  ..            -> repo root (api-test/)
-#                    ../shared/... -> the real shared/ schema + seed
+# The VS Code Dev Containers extension runs compose with the COMPOSE FILE's
+# folder (.devcontainer/) as the project directory, so relative paths below
+# resolve from js-express/.devcontainer/:
+#     ../..            -> repo root (api-test/)   [mounted at /workspace]
+#     ../../shared/... -> the real shared/ schema + seed
 #
 # Same project name + network as the other implementations, so Postgres/Redis
 # containers and their data volumes are shared (start one impl, the rest reuse).
@@ -16,7 +17,7 @@ services:
     image: mcr.microsoft.com/devcontainers/javascript-node:20
     command: sleep infinity
     volumes:
-      - ..:/workspace:cached
+      - ../..:/workspace:cached
     working_dir: /workspace/js-express
     environment:
       PORT: "3001"
@@ -45,7 +46,7 @@ services:
       POSTGRES_DB: taskbench
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ../shared/postgres:/docker-entrypoint-initdb.d:ro
+      - ../../shared/postgres:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U bench -d taskbench"]
       interval: 5s

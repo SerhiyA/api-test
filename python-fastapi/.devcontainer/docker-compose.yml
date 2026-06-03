@@ -5,9 +5,9 @@
 # the rest reuse the same containers + data volumes). The dev service is named
 # `app-python` so it doesn't collide with js-express's `app` container.
 #
-# Paths resolve from the opened folder (python-fastapi/), so:
-#   ..            -> repo root (api-test/)
-#   ../shared/... -> the real shared/ schema + seed
+# Paths resolve from the compose file's folder (.devcontainer/), so:
+#   ../..            -> repo root (api-test/)   [mounted at /workspace]
+#   ../../shared/... -> the real shared/ schema + seed
 name: task-benchmark
 
 services:
@@ -15,7 +15,7 @@ services:
     image: mcr.microsoft.com/devcontainers/python:3.12
     command: sleep infinity
     volumes:
-      - ..:/workspace:cached
+      - ../..:/workspace:cached
     working_dir: /workspace/python-fastapi
     environment:
       PORT: "3002"
@@ -44,7 +44,7 @@ services:
       POSTGRES_DB: taskbench
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ../shared/postgres:/docker-entrypoint-initdb.d:ro
+      - ../../shared/postgres:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U bench -d taskbench"]
       interval: 5s
