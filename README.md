@@ -212,14 +212,47 @@ test one at a time.
 ### Where to see results
 
 - **Portal** — live per-request latency comparison in the browser at :5173.
-- **JMeter HTML dashboard** — open `shared/jmeter/results/<impl>/index.html`
-  for graphs and the statistics table (throughput, percentiles, error %).
-- **Raw samples** — `shared/jmeter/results/<impl>.jtl` (per-sample CSV).
+- **JMeter HTML dashboard** — `run-all.sh` writes `results/<impl>/index.html`
+  (graphs + statistics table). These are *generated artifacts* and are
+  **gitignored** (the dashboards + raw `.jtl` weigh ~100 MB) — regenerate them
+  locally. The headline numbers are summarized below.
+- **Raw samples** — `shared/jmeter/results/<impl>.jtl` (per-sample CSV, also gitignored).
 - **`X-Process-Time-Ms`** — every API response carries server-measured time,
   inspectable in any HTTP client / browser dev tools.
 
 Full JMeter docs (Docker option, parameters, reading the numbers):
 [`shared/jmeter/README.md`](shared/jmeter/README.md).
+
+### Benchmark results (latest run)
+
+Run on **2026-06-04**, mixed traffic, **50 concurrent users · 60 s · cpu_n=2000**
+(`/tasks` list + `/bench/db simple` + `/bench/cache` + `/bench/cpu`), one API at
+a time, all in production/release mode. **0% errors** across every run.
+
+| Impl            | Throughput (req/s) | Mean (ms) | p95 (ms) | p99 (ms) | Samples |
+|-----------------|-------------------:|----------:|---------:|---------:|--------:|
+| **go-gin**      | **5203**           | 9         | 21       | 40       | 316,349 |
+| **rust-axum**   | 4827               | 9         | 18       | **30**   | 293,396 |
+| **js-express**  | 781                | 58        | 147      | 896      | 47,419  |
+| **python-fastapi** | 30              | 1541      | 237      | 58,945   | 2,225   |
+
+Per-endpoint mean latency (ms) tells the same story — the compiled runtimes are
+flat across the board, while the single-threaded ones buckle on the CPU sampler:
+
+| Impl           | /tasks list | /bench/db | /bench/cache | /bench/cpu |
+|----------------|------------:|----------:|-------------:|-----------:|
+| go-gin         | 11          | 9         | 8            | 7          |
+| rust-axum      | 12          | 9         | 9            | 7          |
+| js-express     | 76          | 88        | 47           | 21         |
+| python-fastapi | 3019        | 1660      | 558          | 817        |
+
+**Takeaways:** Go and Rust sustain **~5000 req/s** with single/low-double-digit
+millisecond latency and tight tails (Rust has the flattest p99). Node holds up
+on I/O but its single thread stalls under load — note the p99 spike to ~900 ms.
+Python/FastAPI trails by ~170× on throughput here; under this concurrency its
+sync request handling serializes and tail latency blows out to ~59 s. (Numbers
+are from one developer laptop run — directional, not a vendor benchmark. Re-run
+`./run-all.sh` for your own hardware.)
 
 ---
 

@@ -1,4 +1,2 @@
-# Raw per-sample results are large (tens of MB) — keep them out of git.
-# The generated HTML dashboards under results/<impl>/ ARE committed so the
-# benchmark numbers are viewable without re-running JMeter.
+results/
 *.jtl
