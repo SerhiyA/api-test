@@ -38,6 +38,7 @@ Install: `brew install jmeter` (macOS) or grab it from <https://jmeter.apache.or
 
 ```bash
 cd shared/jmeter
+mkdir -p results          # JMeter creates results/js-express, but its parent must exist
 jmeter -n -t task-benchmark.jmx \
   -Jport=3001 -Jthreads=50 -Jrampup=10 -Jduration=60 \
   -l results/js-express.jtl -e -o results/js-express
@@ -45,7 +46,9 @@ jmeter -n -t task-benchmark.jmx \
 
 - `-n` = non-GUI (always use this for real load — the GUI can't push much load).
 - `-l <file.jtl>` = raw per-sample results.
-- `-e -o <dir>` = generate an HTML dashboard (the dir must not already exist).
+- `-e -o <dir>` = generate an HTML dashboard. The **parent** dir (`results/`) must
+  exist, and the **leaf** dir (`results/js-express`) must not already exist — delete
+  it before re-running, or use `run-all.sh` which handles both.
 
 Open `results/js-express/index.html` for graphs and the statistics table.
 
